@@ -49,7 +49,41 @@ cluster_data = [
 
 
 cluster_profile=pd.DataFrame(cluster_data)
-cluster_profile.head(2)
+
+@app.get("/get-segment-details/{cluster_id}")
+async def get_segment_details(cluster_id: int):
+    segment = cluster_profiles[cluster_profiles['Cluster'] == cluster_id]
+    if not segment.empty:
+        return segment.to_dict(orient="records")[0]
+    else:
+        return {'error': 'Cluster not found'}
+
+
+@app.get("/segment-stats")
+async def get_segment_stats():
+    """Returns aggregated statistics for each segment including percentages."""
+    return segment_stats_dict
+
+
+@app.get("/basic-stats")
+async def get_basic_stats():
+    """Returns total monthly revenue."""
+    total = data['Monthly_Revenue'].sum().round(2)
+    return {"total_monthly_revenue": total}
+
+
+
+@app.get("/top-performing-customers")
+async def get_top_customers():
+    try:
+        top_customers = data.nlargest(10, "Monthly_Revenue")[[
+            "Customer_ID", "Age", "Gender", "Monthly_Revenue", "Segment"
+        ]]
+        result = top_customers.to_dict(orient="records")
+        return {"data": result}
+    except Exception as e:
+        return {'error': str(e)}
+
 
 
 
